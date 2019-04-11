@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sts.mapper.UserMapper">
+		
+		<!-- 내 프로필 출력  -->
+		<select id="myInfo" resultType="com.sts.domain.User_">
+		SELECT id_, profile_, status_message, reg_date, email FROM user_ where id_=#{id_}
+		</select>
+		
+		<!-- 팔로워 목록   -->
+		<select id="followerList" resultType="com.sts.domain.User_">
+			SELECT r.send_user, u.profile_ FROM user_ u, relation r
+			where r.receive_user = #{id_}
+			and r.send_user = u.id_
+		</select>
+		
+		<!-- 팔로잉 목록  -->
+		<select id="followingList" resultType="com.sts.domain.User_">
+			SELECT r.receive_user, u.profile_ FROM user_ u, relation r
+			where r.send_user = #{id_}
+			and r.receive_user = u.id_
+		</select>
+		
+		<!-- 비밀번호 변경  --> 
+		<update id="pwUpdate" >
+			UPDATE user_
+			set pw_ = #{newPw}
+			where id_ = #{id_} and pw_ = #{pw_}
+		</update>
+		
+		<!-- 로그인 -->
+		<select id="login" resultType="com.sts.domain.User_">
+			SELECT id_, profile_, status_message, reg_date, email FROM user_ WHERE id_ = #{id_} AND pw_ = #{pw_}
+		</select>
+		
+		<!-- 회원가입  -->
+		<insert id="signin">
+			INSERT INTO user_(id_, pw_, profile_, reg_date, email) 
+				VALUES(#{id_}, #{pw_}, 'avatar.jpg', NOW(), #{email})
+		</insert>
+		
+		<!-- 비밀번호 찾기(id입력하면 이메일 받아오기) -->
+		<select id="findPw" resultType="com.sts.domain.User_">
+			SELECT email FROM user_ WHERE id_ = #{id_}
+		</select>
+		
+		<!-- 이메일 주소로 비밀번호 보내기  -->
+		<select id="sendPw" resultType="com.sts.domain.User_">
+			SELECT pw_ FROM user_ WHERE id_ = #{id_} AND email=#{email}
+		</select>
+		
+		<!-- 아이디 찾기(이메일 입력하면 id받아오기)-->
+		<select id="findId" resultType="com.sts.domain.User_">
+			SELECT id_ FROM user_  WHERE email  = #{email}
+		</select>
+		
+		<!-- 아이디 중복검사 -->
+		<select id="idCheck" resultType="com.sts.domain.User_">
+			SELECT id_ FROM user_  WHERE id_  = #{id_}
+		</select>
+		
+		<!-- 팔로우 여부 확인 -->
+		<select id="followCheck" resultType="int">
+			SELECT COUNT(*) check_ FROM relation
+			WHERE send_user=#{send_user} AND receive_user=#{receive_user}
+		</select>
+		
+		<!-- 팔로우하기 -->
+		<insert id="follow" >
+			INSERT INTO relation (send_user, receive_user) VALUES (#{send_user},#{receive_user})
+		</insert>
+		
+		<!-- 언팔하기 -->
+		<delete id="unFollow" >
+			DELETE FROM relation WHERE send_user = #{send_user} AND receive_user = #{receive_user}
+		</delete>
+		
+		<!-- 프로필 업데이트  --> 
+		<update id="profileUpdate" >
+			UPDATE user_
+			set status_message = #{status_message} , email=#{email}
+			where id_ = #{id_}
+		</update>
+		
+		<!-- 프로필 사진 업데이트  --> 
+		<update id="profilePictureUpdate" >
+			UPDATE user_
+			set profile_ = #{profile_}
+			where id_ = #{id_}
+		</update>
+		
+</mapper> 

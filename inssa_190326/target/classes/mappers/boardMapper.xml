@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sts.mapper.BoardMapper">
+	
+		<!-- 로그인유저/특정유저 게시물 출력 -->
+		<select id="myBoardList" resultType="com.sts.domain.Board">
+			SELECT b.board_id, b.id_ , picture, content, b_reg_date, IF(ISNULL(l.id_), '0', '1') lid, likey_id, likey_count 
+				FROM board b LEFT JOIN likey l
+			ON b.board_id = l.board_id AND l.id_ =#{lid} WHERE b.id_ =#{id_} ORDER BY board_id DESC
+		</select>
+		
+		<!-- 팔로잉한 사람들 게시물 출력 -->
+		<select id="timeLinePrint" resultType="com.sts.domain.Board">
+		 SELECT b.board_id, profile_, b.id_ , picture, content, b_reg_date, likey_count, IF(ISNULL(l.id_), '0', '1') as lid, likey_id
+			FROM board b 
+            JOIN user_ u ON b.id_ = u.id_
+			JOIN relation r ON r.receive_user = b.id_ AND send_user = #{id_}
+            LEFT JOIN likey l ON b.board_id = l.board_id AND l.id_ = #{id_}
+           ORDER BY b.board_id DESC
+            
+		</select>
+		
+		<!-- 내게시물 댓글 출력 -->
+		<select id="myBoardComment" resultType="com.sts.domain.Board">
+			SELECT id_, comment_content, c_reg_date, comment_id, board_id FROM comment_ c
+		</select>
+	
+		<!-- 내게시물 좋아요 출력 -->
+		<select id="myBoardLikey" resultType="com.sts.domain.Board">
+			SELECT board_id, l.id_, profile_ FROM likey l, user_ u where l.id_ = u.id_ AND board_id=#{board_id}
+		</select>
+	
+		<!-- 내게시물 댓글 입력  -->
+		<insert id="myBoardCommentAdd" >
+			INSERT INTO comment_ (comment_id,comment_content, id_, board_id, c_reg_date)
+		VALUES ((SELECT CONCAT('C', LPAD(IFNULL(SUBSTR(MAX(comment_id), 2), 0 )+1, 3, 0)) AS newid FROM comment_ c)
+		,#{comment_content},#{id_},#{board_id}, NOW());
+		</insert>
+		
+		<!-- 내게시물 댓글 삭제  -->
+		<delete id="myBoardCommentDel">
+			DELETE FROM comment_ WHERE comment_id=#{comment_id}
+		</delete>
+		
+		<!-- 좋아요 추가  -->
+		<insert id="likeyAdd">
+			INSERT INTO likey VALUES ((SELECT CONCAT('L', LPAD(IFNULL(SUBSTR(MAX(likey_id), 2), 0 )+1, 3, 0)) AS newid FROM likey l)
+				,#{board_id},#{id_})
+		</insert>
+		
+		<!-- 좋아요 수 +1 -->
+		<update id="likeyCountAdd">
+			UPDATE board SET likey_count = likey_count+1 WHERE board_id = #{board_id}
+		</update>
+
+		<!-- 좋아요 취소 -->
+		<delete id="likeyDel">
+			DELETE FROM likey WHERE id_=#{id_} and board_id=#{board_id}
+		</delete>
+		
+		<!-- 좋아요 수 -1 -->
+		<update id="likeyCountDel">
+			UPDATE board SET likey_count = likey_count-1 WHERE board_id = #{board_id}
+		</update>
+		
+		<!-- 게시물 추가  -->
+		<insert id="myBoardAdd">
+			INSERT INTO board (board_id, id_, picture, content, b_reg_date, likey_count)
+   				VALUES((SELECT CONCAT('B', LPAD(IFNULL(SUBSTR(MAX(board_id), 2), 0 )+1, 3, 0)) AS newid FROM board b), 
+   				#{id_}, #{picture}, #{content}, NOW(), 0)
+		</insert>
+		
+		<!-- 게시물 수정  -->
+		<update id="myBoardUpdate">
+			UPDATE  board SET content=#{content} WHERE board_id=#{board_id}
+		</update>
+		
+		<!-- 게시물 삭제  -->
+		<delete id="myBoardDel">
+			DELETE FROM board WHERE board_id=#{board_id}
+		</delete>
+
+		<!-- 갤러리 모달 게시글 출력  -->		
+		<select id="galleryClick" resultType="com.sts.domain.Board">
+			SELECT b.board_id, picture, content, b_reg_date, c.id_ as cid,
+			likey_count, comment_content, c_reg_date, comment_id
+				FROM board b LEFT JOIN comment_ c ON b.board_id = c.board_id
+				WHERE b.board_id = #{board_id}
+		</select>
+</mapper>
